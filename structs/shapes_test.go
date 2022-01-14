@@ -1,6 +1,7 @@
 package structs
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -16,26 +17,21 @@ func TestPerimeter(t *testing.T) {
 }
 
 func TestArea(t *testing.T) {
-	assertArea := func(t *testing.T, shape Shape, want float64) {
-		t.Helper()
-		got := shape.Area()
-
-		if got != want {
-			t.Errorf("Got %.2f, expected %.2f", got, want)
-		}
+	areaTests := []struct {
+		shape   Shape
+		hasArea float64
+	}{
+		{shape: Rectangle{Width: 3.0, Height: 10.0}, hasArea: 30.0},
+		{shape: Circle{Radius: 10.0}, hasArea: 314.1592653589793},
+		{shape: Triangle{Height: 12, Base: 3}, hasArea: 36.0},
 	}
 
-	t.Run("Rectangle", func(t *testing.T) {
-		want := 30.0
-		rect := Rectangle{3.0, 10.0}
-
-		assertArea(t, rect, want)
-	})
-
-	t.Run("Circle", func(t *testing.T) {
-		want := 314.1592653589793
-		circle := Circle{10.0}
-
-		assertArea(t, circle, want)
-	})
+	for _, tc := range areaTests {
+		t.Run(reflect.TypeOf(tc.shape).Name(), func(t *testing.T) {
+			got := tc.shape.Area()
+			if got != tc.hasArea {
+				t.Errorf("%#v got %.2f, expected %.2f", tc.shape, got, tc.hasArea)
+			}
+		})
+	}
 }
