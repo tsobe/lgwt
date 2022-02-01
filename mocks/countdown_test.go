@@ -2,34 +2,64 @@ package main
 
 import (
 	"bytes"
+	"reflect"
 	"testing"
 )
 
-type SpySleeper struct {
-	Calls int
+const sleep = "s"
+const write = "w"
+
+type SpyCountdownOperations struct {
+	Calls []string
 }
 
-func (s *SpySleeper) Sleep() {
-	s.Calls++
+func (s *SpyCountdownOperations) Write(b []byte) (n int, err error) {
+	s.Calls = append(s.Calls, write)
+	return
+}
+
+func (s *SpyCountdownOperations) Sleep() {
+	s.Calls = append(s.Calls, sleep)
 }
 
 func TestCountdown(t *testing.T) {
-	buffer := &bytes.Buffer{}
-	sleeper := &SpySleeper{}
-	want := `3
+	t.Run("Countdown from 3 to Go!", func(t *testing.T) {
+		buffer := &bytes.Buffer{}
+		want := `3
 2
 1
 Go!`
 
-	Countdown(buffer, sleeper)
+		Countdown(buffer, &SpyCountdownOperations{})
 
-	got := buffer.String()
+		got := buffer.String()
 
-	if got != want {
-		t.Errorf("Got %s, expected %s", got, want)
-	}
+		if got != want {
+			t.Errorf("Got %s, expected %s", got, want)
+		}
+	})
 
-	if sleeper.Calls != 4 {
-		t.Errorf("Expected %d calls, got %d", 4, sleeper.Calls)
-	}
+	t.Run("Sleep before every print", func(t *testing.T) {
+		expectedCallOrder := []string{
+			sleep,
+			write,
+			sleep,
+			write,
+			sleep,
+			write,
+			sleep,
+			write,
+		}
+		spyCountdownOperations := &SpyCountdownOperations{}
+
+		Countdown(spyCountdownOperations, spyCountdownOperations)
+
+		if !reflect.DeepEqual(spyCountdownOperations.Calls, expectedCallOrder) {
+			t.Errorf(
+				"Expected calls in following order %v, got %v",
+				expectedCallOrder,
+				spyCountdownOperations.Calls,
+			)
+		}
+	})
 }
