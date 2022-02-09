@@ -8,14 +8,18 @@ import (
 
 type PingSignal chan interface{}
 
-func Racer(urlA string, urlB string) (winner string, err error) {
+func Racer(urlA string, urlB string) (string, error) {
+	return ConfigurableRacer(urlA, urlB, 10*time.Second)
+}
+
+func ConfigurableRacer(urlA string, urlB string, timeout time.Duration) (string, error) {
 	select {
 	case <-ping(urlA):
-		return urlA, err
+		return urlA, nil
 	case <-ping(urlB):
-		return urlB, err
-	case <-time.After(10 * time.Second):
-		return "", fmt.Errorf("timed out in %s", 10*time.Second)
+		return urlB, nil
+	case <-time.After(timeout):
+		return "", fmt.Errorf("timed out in %s", timeout)
 	}
 }
 

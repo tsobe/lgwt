@@ -31,16 +31,11 @@ func TestRacer(t *testing.T) {
 	})
 
 	t.Run("Error is returned if timeout is exceeded", func(t *testing.T) {
-		slowServer := makeDelayedServer(11 * time.Second)
-		fastServer := makeDelayedServer(10 * time.Second)
+		server := makeDelayedServer(30 * time.Millisecond)
 
-		defer slowServer.Close()
-		defer fastServer.Close()
+		defer server.Close()
 
-		slowUrl := slowServer.URL
-		fastUrl := fastServer.URL
-
-		_, err := Racer(slowUrl, fastUrl)
+		_, err := ConfigurableRacer(server.URL, server.URL, 20*time.Millisecond)
 
 		if err == nil {
 			t.Error("Expected an error but didn't get one")
