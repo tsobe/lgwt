@@ -7,91 +7,96 @@ import (
 
 func TestWalk(t *testing.T) {
 	testCases := []struct {
-		name             string
-		input            interface{}
-		withStringFields func(t *testing.T, got []string)
+		name                   string
+		walking                interface{}
+		yieldsWithStringFields func(t *testing.T, got []string)
 	}{
 		{
-			name:             "Struct with one string field",
-			input:            struct{ Name string }{"Chris"},
-			withStringFields: equalTo([]string{"Chris"}),
+			name:                   "Struct with one string field",
+			walking:                struct{ Name string }{"Chris"},
+			yieldsWithStringFields: equalTo([]string{"Chris"}),
 		},
 		{
 			name: "Struct with two string fields",
-			input: struct {
+			walking: struct {
 				Name string
 				City string
 			}{"Chris", "Berlin"},
-			withStringFields: equalTo([]string{"Chris", "Berlin"}),
+			yieldsWithStringFields: equalTo([]string{"Chris", "Berlin"}),
 		},
 		{
 			name: "Struct with one string and one int fields",
-			input: struct {
+			walking: struct {
 				Name string
 				Age  int
 			}{"Chris", 27},
-			withStringFields: equalTo([]string{"Chris"}),
+			yieldsWithStringFields: equalTo([]string{"Chris"}),
 		},
 		{
-			name:             "Nested fields",
-			input:            Person{"Chris", Profile{27, "Berlin"}},
-			withStringFields: equalTo([]string{"Chris", "Berlin"}),
+			name:                   "Nested fields",
+			walking:                Person{"Chris", Profile{27, "Berlin"}},
+			yieldsWithStringFields: equalTo([]string{"Chris", "Berlin"}),
 		},
 		{
-			name:             "Pointer",
-			input:            &Person{"Chris", Profile{27, "Berlin"}},
-			withStringFields: equalTo([]string{"Chris", "Berlin"}),
+			name:                   "Pointer",
+			walking:                &Person{"Chris", Profile{27, "Berlin"}},
+			yieldsWithStringFields: equalTo([]string{"Chris", "Berlin"}),
 		},
 		{
 			name: "Slice",
-			input: []Profile{
+			walking: []Profile{
 				{27, "Berlin"},
 				{28, "London"},
 			},
-			withStringFields: equalTo([]string{"Berlin", "London"}),
+			yieldsWithStringFields: equalTo([]string{"Berlin", "London"}),
 		},
 		{
 			name: "Array",
-			input: [2]Profile{
+			walking: [2]Profile{
 				{27, "Berlin"},
 				{28, "London"},
 			},
-			withStringFields: equalTo([]string{"Berlin", "London"}),
+			yieldsWithStringFields: equalTo([]string{"Berlin", "London"}),
 		},
 		{
-			name:             "Map",
-			input:            map2Of("FooVal", "BarVal"),
-			withStringFields: containing([]string{"FooVal", "BarVal"}),
+			name:                   "Map",
+			walking:                map2Of("FooVal", "BarVal"),
+			yieldsWithStringFields: containing([]string{"FooVal", "BarVal"}),
 		},
 		{
-			name:             "Channel",
-			input:            channelOf(Profile{22, "Berlin"}, Profile{23, "London"}),
-			withStringFields: equalTo([]string{"Berlin", "London"}),
+			name: "Channel",
+			walking: channelOf(
+				Profile{22, "Berlin"},
+				Profile{23, "London"},
+			),
+			yieldsWithStringFields: equalTo([]string{"Berlin", "London"}),
 		},
 		{
-			name:             "Function",
-			input:            fn2Of(Profile{22, "Berlin"}, Profile{23, "London"}),
-			withStringFields: equalTo([]string{"Berlin", "London"}),
+			name:                   "Function",
+			walking:                fn2Of(Profile{22, "Berlin"}, Profile{23, "London"}),
+			yieldsWithStringFields: equalTo([]string{"Berlin", "London"}),
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			input := tc.input
+			input := tc.walking
 
-			got := collect(input)
+			got := walk(input)
 
-			tc.withStringFields(t, got)
+			tc.yieldsWithStringFields(t, got)
 		})
 	}
 }
 
+// asserts that actual fields equal to the specified fields (exact, ordered match)
 func equalTo(fields []string) func(*testing.T, []string) {
 	return func(t *testing.T, got []string) {
 		assertDeepEqual(t, got, fields)
 	}
 }
 
+// asserts that actual fields contain all the specified fields (in no particular order)
 func containing(fields []string) func(*testing.T, []string) {
 	return func(t *testing.T, got []string) {
 		for _, field := range fields {
@@ -135,9 +140,9 @@ func channelOf(profiles ...Profile) chan Profile {
 	return ch
 }
 
-func collect(in interface{}) []string {
+func walk(in interface{}) []string {
 	var collected []string
-	walk(in, func(name string) {
+	Walk(in, func(name string) {
 		collected = append(collected, name)
 	})
 	return collected
@@ -152,14 +157,10 @@ func assertDeepEqual(t *testing.T, got, want interface{}) {
 
 func assertContains(t *testing.T, haystack []string, needle string) {
 	t.Helper()
-	contains := false
 	for _, val := range haystack {
 		if val == needle {
-			contains = true
-			break
+			return
 		}
 	}
-	if !contains {
-		t.Errorf("Expected %v to contain %q, but didn't", haystack, needle)
-	}
+	t.Errorf("Expected %v to contain %q, but didn't", haystack, needle)
 }

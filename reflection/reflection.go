@@ -2,11 +2,11 @@ package reflection
 
 import "reflect"
 
-func walk(input interface{}, fn func(name string)) {
+func Walk(input interface{}, fn func(name string)) {
 	val := getValue(input)
 
 	walkValue := func(val reflect.Value) {
-		walk(val.Interface(), fn)
+		Walk(val.Interface(), fn)
 	}
 
 	switch val.Kind() {
