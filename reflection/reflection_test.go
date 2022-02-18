@@ -7,14 +7,14 @@ import (
 
 func TestWalk(t *testing.T) {
 	testCases := []struct {
-		name            string
-		input           interface{}
-		hasStringFields []string
+		name             string
+		input            interface{}
+		withStringFields func(t *testing.T, got []string)
 	}{
 		{
-			name:            "Struct with one string field",
-			input:           struct{ Name string }{"Chris"},
-			hasStringFields: []string{"Chris"},
+			name:             "Struct with one string field",
+			input:            struct{ Name string }{"Chris"},
+			withStringFields: equalTo([]string{"Chris"}),
 		},
 		{
 			name: "Struct with two string fields",
@@ -22,7 +22,7 @@ func TestWalk(t *testing.T) {
 				Name string
 				City string
 			}{"Chris", "Berlin"},
-			hasStringFields: []string{"Chris", "Berlin"},
+			withStringFields: equalTo([]string{"Chris", "Berlin"}),
 		},
 		{
 			name: "Struct with one string and one int fields",
@@ -30,17 +30,17 @@ func TestWalk(t *testing.T) {
 				Name string
 				Age  int
 			}{"Chris", 27},
-			hasStringFields: []string{"Chris"},
+			withStringFields: equalTo([]string{"Chris"}),
 		},
 		{
-			name:            "Nested fields",
-			input:           Person{"Chris", Profile{27, "Berlin"}},
-			hasStringFields: []string{"Chris", "Berlin"},
+			name:             "Nested fields",
+			input:            Person{"Chris", Profile{27, "Berlin"}},
+			withStringFields: equalTo([]string{"Chris", "Berlin"}),
 		},
 		{
-			name:            "Pointer",
-			input:           &Person{"Chris", Profile{27, "Berlin"}},
-			hasStringFields: []string{"Chris", "Berlin"},
+			name:             "Pointer",
+			input:            &Person{"Chris", Profile{27, "Berlin"}},
+			withStringFields: equalTo([]string{"Chris", "Berlin"}),
 		},
 		{
 			name: "Slice",
@@ -48,7 +48,7 @@ func TestWalk(t *testing.T) {
 				{27, "Berlin"},
 				{28, "London"},
 			},
-			hasStringFields: []string{"Berlin", "London"},
+			withStringFields: equalTo([]string{"Berlin", "London"}),
 		},
 		{
 			name: "Array",
@@ -56,42 +56,48 @@ func TestWalk(t *testing.T) {
 				{27, "Berlin"},
 				{28, "London"},
 			},
-			hasStringFields: []string{"Berlin", "London"},
+			withStringFields: equalTo([]string{"Berlin", "London"}),
 		},
 		{
-			name:            "Channel",
-			input:           channelOf(Profile{22, "Berlin"}, Profile{23, "London"}),
-			hasStringFields: []string{"Berlin", "London"},
+			name:             "Map",
+			input:            map2Of("FooVal", "BarVal"),
+			withStringFields: containing([]string{"FooVal", "BarVal"}),
 		},
 		{
-			name:            "Function",
-			input:           fn2Of(Profile{22, "Berlin"}, Profile{23, "London"}),
-			hasStringFields: []string{"Berlin", "London"},
+			name:             "Channel",
+			input:            channelOf(Profile{22, "Berlin"}, Profile{23, "London"}),
+			withStringFields: equalTo([]string{"Berlin", "London"}),
+		},
+		{
+			name:             "Function",
+			input:            fn2Of(Profile{22, "Berlin"}, Profile{23, "London"}),
+			withStringFields: equalTo([]string{"Berlin", "London"}),
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			input := tc.input
-			want := tc.hasStringFields
 
 			got := collect(input)
 
-			assertDeepEqual(t, got, want)
+			tc.withStringFields(t, got)
 		})
 	}
+}
 
-	t.Run("Map", func(t *testing.T) {
-		input := map[string]string{
-			"Foo": "FooVal",
-			"Bar": "BarVal",
+func equalTo(fields []string) func(*testing.T, []string) {
+	return func(t *testing.T, got []string) {
+		assertDeepEqual(t, got, fields)
+	}
+}
+
+func containing(fields []string) func(*testing.T, []string) {
+	return func(t *testing.T, got []string) {
+		for _, field := range fields {
+			assertContains(t, got, field)
 		}
-
-		got := collect(input)
-
-		assertContains(t, got, "FooVal")
-		assertContains(t, got, "BarVal")
-	})
+	}
 }
 
 type Profile struct {
@@ -102,6 +108,14 @@ type Profile struct {
 type Person struct {
 	Name    string
 	Profile Profile
+}
+
+func map2Of(val1, val2 string) map[string]string {
+	input := map[string]string{
+		"Foo": val1,
+		"Bar": val2,
+	}
+	return input
 }
 
 func fn2Of(p1, p2 Profile) func() (Profile, Profile) {
@@ -130,6 +144,7 @@ func collect(in interface{}) []string {
 }
 
 func assertDeepEqual(t *testing.T, got, want interface{}) {
+	t.Helper()
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("Got %v, expected %v", got, want)
 	}
