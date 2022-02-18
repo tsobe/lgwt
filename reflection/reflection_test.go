@@ -6,16 +6,6 @@ import (
 )
 
 func TestWalk(t *testing.T) {
-	type Profile struct {
-		Age  int
-		City string
-	}
-
-	type Person struct {
-		Name    string
-		Profile Profile
-	}
-
 	testCases := []struct {
 		name            string
 		input           interface{}
@@ -68,6 +58,16 @@ func TestWalk(t *testing.T) {
 			},
 			hasStringFields: []string{"Berlin", "London"},
 		},
+		{
+			name:            "Channel",
+			input:           channelOf(Profile{22, "Berlin"}, Profile{23, "London"}),
+			hasStringFields: []string{"Berlin", "London"},
+		},
+		{
+			name:            "Function",
+			input:           fn2Of(Profile{22, "Berlin"}, Profile{23, "London"}),
+			hasStringFields: []string{"Berlin", "London"},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -77,9 +77,7 @@ func TestWalk(t *testing.T) {
 
 			got := collect(input)
 
-			if !reflect.DeepEqual(got, want) {
-				t.Errorf("Got %v, expected %v", got, want)
-			}
+			assertDeepEqual(t, got, want)
 		})
 	}
 
@@ -94,31 +92,33 @@ func TestWalk(t *testing.T) {
 		assertContains(t, got, "FooVal")
 		assertContains(t, got, "BarVal")
 	})
+}
 
-	t.Run("Channel", func(t *testing.T) {
-		input := make(chan Profile)
-		want := []string{"Berlin", "London"}
-		go func() {
-			input <- Profile{22, "Berlin"}
-			input <- Profile{23, "London"}
-			close(input)
-		}()
+type Profile struct {
+	Age  int
+	City string
+}
 
-		got := collect(input)
+type Person struct {
+	Name    string
+	Profile Profile
+}
 
-		assertDeepEqual(t, got, want)
-	})
+func fn2Of(p1, p2 Profile) func() (Profile, Profile) {
+	return func() (Profile, Profile) {
+		return p1, p2
+	}
+}
 
-	t.Run("Function", func(t *testing.T) {
-		input := func() (Profile, Profile) {
-			return Profile{22, "Berlin"}, Profile{23, "London"}
+func channelOf(profiles ...Profile) chan Profile {
+	ch := make(chan Profile)
+	go func() {
+		for _, p := range profiles {
+			ch <- p
 		}
-		want := []string{"Berlin", "London"}
-
-		got := collect(input)
-
-		assertDeepEqual(t, got, want)
-	})
+		close(ch)
+	}()
+	return ch
 }
 
 func collect(in interface{}) []string {
