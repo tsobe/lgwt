@@ -89,14 +89,14 @@ func TestWalk(t *testing.T) {
 	}
 }
 
-// asserts that actual fields equal to the specified fields (exact, ordered match)
+// returns function asserting that actual fields equal to the specified fields (exact, ordered match)
 func equalTo(fields []string) func(*testing.T, []string) {
 	return func(t *testing.T, got []string) {
 		assertDeepEqual(t, got, fields)
 	}
 }
 
-// asserts that actual fields contain all the specified fields (in no particular order)
+// returns function asserting that actual fields contain all the specified fields (in no particular order)
 func containing(fields []string) func(*testing.T, []string) {
 	return func(t *testing.T, got []string) {
 		for _, field := range fields {
