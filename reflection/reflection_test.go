@@ -61,7 +61,7 @@ func TestWalk(t *testing.T) {
 		{
 			name:                   "Map",
 			walking:                map2Of("FooVal", "BarVal"),
-			yieldsWithStringFields: containing([]string{"FooVal", "BarVal"}),
+			yieldsWithStringFields: containing([]string{"BarVal", "FooVal"}),
 		},
 		{
 			name: "Channel",
@@ -116,11 +116,10 @@ type Person struct {
 }
 
 func map2Of(val1, val2 string) map[string]string {
-	input := map[string]string{
+	return map[string]string{
 		"Foo": val1,
 		"Bar": val2,
 	}
-	return input
 }
 
 func fn2Of(p1, p2 Profile) func() (Profile, Profile) {
@@ -162,5 +161,5 @@ func assertContains(t *testing.T, haystack []string, needle string) {
 			return
 		}
 	}
-	t.Errorf("Expected %v to contain %q, but didn't", haystack, needle)
+	t.Errorf("Expected %v to contain %q", haystack, needle)
 }
