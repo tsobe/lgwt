@@ -2,7 +2,8 @@ package context
 
 import (
 	"context"
-	"fmt"
+	"errors"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -15,13 +16,30 @@ type SpyStore struct {
 	t         *testing.T
 }
 
-func (s *SpyStore) Fetch() string {
-	time.Sleep(100 * time.Millisecond)
-	return s.response
-}
+func (s *SpyStore) Fetch(ctx context.Context) (string, error) {
+	data := make(chan string, 1)
 
-func (s *SpyStore) Cancel() {
-	s.cancelled = true
+	go func() {
+		var result string
+		for _, c := range s.response {
+			select {
+			case <-ctx.Done():
+				log.Println("spy store got cancelled")
+				return
+			default:
+				time.Sleep(10 * time.Millisecond)
+				result += string(c)
+			}
+		}
+		data <- result
+	}()
+
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	case res := <-data:
+		return res, nil
+	}
 }
 
 func (s *SpyStore) assertNotCancelled() {
@@ -36,6 +54,24 @@ func (s *SpyStore) assertCancelled() {
 	if !s.cancelled {
 		s.t.Errorf("Store was not told to cancel")
 	}
+}
+
+type SpyResponseWriter struct {
+	written bool
+}
+
+func (w *SpyResponseWriter) Header() http.Header {
+	w.written = true
+	return nil
+}
+
+func (w *SpyResponseWriter) Write(bytes []byte) (int, error) {
+	w.written = true
+	return 0, errors.New("not implemented")
+}
+
+func (w *SpyResponseWriter) WriteHeader(statusCode int) {
+	w.written = true
 }
 
 func TestServer(t *testing.T) {
@@ -65,34 +101,12 @@ func TestServer(t *testing.T) {
 		cancellingCtx, cancel := context.WithCancel(req.Context())
 		time.AfterFunc(5*time.Millisecond, cancel)
 		req = req.WithContext(cancellingCtx)
-		res := httptest.NewRecorder()
+		res := &SpyResponseWriter{}
 
 		srv.ServeHTTP(res, req)
 
-		store.assertCancelled()
-	})
-}
-
-type Store interface {
-	Fetch() string
-	Cancel()
-}
-
-func Server(store Store) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		data := make(chan string, 1)
-
-		go func() {
-			data <- store.Fetch()
-		}()
-
-		select {
-		case storeData := <-data:
-			_, _ = fmt.Fprint(w, storeData)
-		case <-ctx.Done():
-			store.Cancel()
+		if res.written {
+			t.Errorf("A response shouldn't have written")
 		}
-	}
+	})
 }
