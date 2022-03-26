@@ -5,7 +5,7 @@ import (
 )
 
 type RomanNumeral struct {
-	Value  int
+	Value  uint16
 	Symbol string
 }
 
@@ -45,7 +45,7 @@ var subtractiveSymbols = []SubtractiveSymbol{
 	{Value: "M", Subtract: "C"},
 }
 
-func ConvertToNumeral(arabic int) string {
+func ConvertToRoman(arabic uint16) string {
 	var result strings.Builder
 	for _, numeral := range allNumerals {
 		for arabic >= numeral.Value {
@@ -56,8 +56,8 @@ func ConvertToNumeral(arabic int) string {
 	return result.String()
 }
 
-func ConvertToArabic(roman string) int {
-	result := 0
+func ConvertToArabic(roman string) uint16 {
+	var result uint16
 	for i := 0; i < len(roman); i++ {
 		var value, found = findValueAhead(roman, i)
 		result += value
@@ -70,7 +70,7 @@ func ConvertToArabic(roman string) int {
 	return result
 }
 
-func findValueAhead(roman string, index int) (value int, found bool) {
+func findValueAhead(roman string, index int) (value uint16, found bool) {
 	nextIndex := index + 1
 	if nextIndex < len(roman) {
 		for _, ss := range subtractiveSymbols {
@@ -84,7 +84,7 @@ func findValueAhead(roman string, index int) (value int, found bool) {
 	return 0, false
 }
 
-func (numerals *RomanNumerals) valueOf(symbol string) int {
+func (numerals *RomanNumerals) valueOf(symbol string) uint16 {
 	for _, numeral := range *numerals {
 		if numeral.Symbol == symbol {
 			return numeral.Value

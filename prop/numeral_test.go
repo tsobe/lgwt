@@ -3,10 +3,11 @@ package prop
 import (
 	"fmt"
 	"testing"
+	"testing/quick"
 )
 
 var cases = []struct {
-	arabic int
+	arabic uint16
 	roman  string
 }{
 	{arabic: 1, roman: "I"},
@@ -45,7 +46,7 @@ var cases = []struct {
 func TestArabicToRoman(t *testing.T) {
 	for _, test := range cases {
 		t.Run(fmt.Sprintf("Subtract %d converts to Value %q", test.arabic, test.roman), func(t *testing.T) {
-			got := ConvertToNumeral(test.arabic)
+			got := ConvertToRoman(test.arabic)
 			want := test.roman
 
 			if got != want {
@@ -65,5 +66,21 @@ func TestRomanToArabic(t *testing.T) {
 				t.Errorf("Expected %d, got %d", want, got)
 			}
 		})
+	}
+}
+
+func TestPropertiesOfConversion(t *testing.T) {
+	assertion := func(arabic uint16) bool {
+		if arabic > 3999 {
+			return true
+		}
+		t.Log("testing", arabic)
+		roman := ConvertToRoman(arabic)
+		fromRoman := ConvertToArabic(roman)
+		return arabic == fromRoman
+	}
+
+	if err := quick.Check(assertion, nil); err != nil {
+		t.Error("Checks failed", err)
 	}
 }
