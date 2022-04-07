@@ -9,5 +9,5 @@ import (
 
 func main() {
 	t := time.Now()
-	clockface.SVGWriter(os.Stdout, t)
+	clockface.WriteSVG(os.Stdout, t)
 }
