@@ -31,49 +31,6 @@ type Line struct {
 	Y2 float64 `xml:"y2,attr"`
 }
 
-func TestSecondHandAtMidnight(t *testing.T) {
-	tm := simpleTime(1, 0, 0)
-
-	want := Point{X: clockCenterX, Y: clockCenterY - secondHandLength}
-	got := SecondHand(tm)
-
-	if got != want {
-		t.Errorf("Got %v, wanted %v", got, want)
-	}
-}
-
-func TestSecondHandAt30Seconds(t *testing.T) {
-	tm := simpleTime(1, 0, 30)
-
-	want := Point{X: clockCenterX, Y: clockCenterY + secondHandLength}
-	got := SecondHand(tm)
-
-	if got != want {
-		t.Errorf("Got %v, wanted %v", got, want)
-	}
-}
-
-func TestSVGWriterAtMidnight(t *testing.T) {
-	tm := simpleTime(1, 0, 0)
-	b := bytes.Buffer{}
-
-	SVGWriter(&b, tm)
-
-	svg := SVG{}
-
-	xml.Unmarshal(b.Bytes(), &svg)
-
-	want := Line{150, 150, 150, 60}
-
-	for _, line := range svg.Line {
-		if line == want {
-			return
-		}
-	}
-
-	t.Errorf("Expected to find the second hand line %+v, in the SVG lines %+v", want, svg.Line)
-}
-
 func TestSVGWriterSecondHand(t *testing.T) {
 	cases := []struct {
 		time time.Time

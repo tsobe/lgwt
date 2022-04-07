@@ -27,7 +27,7 @@ func TestSecondsInRadians(t *testing.T) {
 	}
 }
 
-func TestSecondHandVector(t *testing.T) {
+func TestSecondHandPoint(t *testing.T) {
 	cases := []struct {
 		time  time.Time
 		point Point
