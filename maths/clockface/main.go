@@ -4,7 +4,7 @@ import (
 	"os"
 	"time"
 
-	clockface "lgwt/maths"
+	clockface "github.com/tsobe/lgwt/maths"
 )
 
 func main() {
