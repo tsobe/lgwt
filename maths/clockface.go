@@ -7,7 +7,6 @@ import (
 
 const (
 	secondsInHalfClock = 30
-	secondsInClock     = 2 * secondsInHalfClock
 	minutesInHalfClock = 30
 	minutesInClock     = 2 * minutesInHalfClock
 	hoursInHalfClock   = 6
@@ -28,11 +27,11 @@ func secondsInRadians(seconds time.Time) float64 {
 }
 
 func minutesInRadians(minutes time.Time) float64 {
-	return (secondsInRadians(minutes) / secondsInClock) + (math.Pi / (minutesInClock / float64(minutes.Minute())))
+	return (secondsInRadians(minutes) / minutesInClock) + (math.Pi / (minutesInHalfClock / float64(minutes.Minute())))
 }
 
 func hoursInRadians(hours time.Time) float64 {
-	return (minutesInRadians(hours) / hoursInClock) + (math.Pi / (hoursInHalfClock / float64(hours.Hour()%12)))
+	return (minutesInRadians(hours) / hoursInClock) + (math.Pi / (hoursInHalfClock / float64(hours.Hour()%hoursInClock)))
 }
 
 func minuteHandPoint(time time.Time) Point {
