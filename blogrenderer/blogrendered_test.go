@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestReader(t *testing.T) {
+func TestRender(t *testing.T) {
 	var (
 		post = blogrenderer.Post{
 			Title:       "hello world",
@@ -18,16 +18,28 @@ func TestReader(t *testing.T) {
 		}
 	)
 
+	renderer, err := blogrenderer.NewRenderer()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	t.Run("It converts a single post into HTML", func(t *testing.T) {
 		buf := bytes.Buffer{}
-		renderer, err := blogrenderer.NewRenderer()
-		if err != nil {
-			t.Fatal(err)
-		}
 
 		err = renderer.Render(&buf, post)
 
 		if err != nil {
+			t.Fatal(err)
+		}
+
+		approvals.VerifyString(t, buf.String())
+	})
+
+	t.Run("It renders an index of posts", func(t *testing.T) {
+		buf := bytes.Buffer{}
+		posts := []blogrenderer.Post{{Title: "Hello World"}, {Title: "Hello World 2"}}
+
+		if err := renderer.RenderIndex(&buf, posts); err != nil {
 			t.Fatal(err)
 		}
 
