@@ -27,7 +27,7 @@ func SumAllTails(matrix ...[]int) []int {
 	return Reduce(matrix, []int{}, accumulator)
 }
 
-func Reduce[I any](input []I, initVal I, accumulator func(I, I) I) I {
+func Reduce[A any, B any](input []A, initVal B, accumulator func(B, A) B) B {
 	result := initVal
 	for _, val := range input {
 		result = accumulator(result, val)
