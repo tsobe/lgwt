@@ -4,13 +4,13 @@ import "testing"
 
 func TestAssertFunctions(t *testing.T) {
 	t.Run("Asserting on integers", func(t *testing.T) {
-		AssertEqual(t, 1, 1)
-		AssertNotEqual(t, 1, 2)
+		assertEqual(t, 1, 1)
+		assertNotEqual(t, 1, 2)
 	})
 
 	t.Run("Asserting on strings", func(t *testing.T) {
-		AssertEqual(t, "hello", "hello")
-		AssertNotEqual(t, "hello", "Grace")
+		assertEqual(t, "hello", "hello")
+		assertNotEqual(t, "hello", "Grace")
 	})
 }
 
@@ -19,44 +19,44 @@ func TestStack(t *testing.T) {
 		stack := new(Stack[int])
 
 		// check stack is empty
-		AssertTrue(t, stack.IsEmpty())
+		assertTrue(t, stack.IsEmpty())
 
 		// add a thing, then check it's not empty
 		stack.Push(123)
-		AssertFalse(t, stack.IsEmpty())
+		assertFalse(t, stack.IsEmpty())
 
 		// add another thing, pop it back again
 		stack.Push(456)
 		value, _ := stack.Pop()
-		AssertEqual(t, value, 456)
+		assertEqual(t, value, 456)
 		value, _ = stack.Pop()
-		AssertEqual(t, value, 123)
-		AssertTrue(t, stack.IsEmpty())
+		assertEqual(t, value, 123)
+		assertTrue(t, stack.IsEmpty())
 	})
 }
 
-func AssertEqual[T comparable](t *testing.T, got, want T) {
+func assertEqual[T comparable](t *testing.T, got, want T) {
 	t.Helper()
 	if got != want {
 		t.Errorf("got %v, want %v", got, want)
 	}
 }
 
-func AssertNotEqual[T comparable](t *testing.T, got, want T) {
+func assertNotEqual[T comparable](t *testing.T, got, want T) {
 	t.Helper()
 	if got == want {
 		t.Errorf("didn't want %+v", got)
 	}
 }
 
-func AssertTrue(t *testing.T, got bool) {
+func assertTrue(t *testing.T, got bool) {
 	t.Helper()
 	if !got {
 		t.Errorf("got %v, want true", got)
 	}
 }
 
-func AssertFalse(t *testing.T, got bool) {
+func assertFalse(t *testing.T, got bool) {
 	t.Helper()
 	if got {
 		t.Errorf("got %v, want false", got)
