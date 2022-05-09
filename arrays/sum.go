@@ -1,7 +1,7 @@
 package arrays
 
 func Sum(numbers []int) int {
-	return reduce(numbers, 0, func(num, sum int) int {
+	return Reduce(numbers, 0, func(num, sum int) int {
 		return num + sum
 	})
 }
@@ -15,8 +15,7 @@ func SumAll(matrix ...[]int) []int {
 }
 
 func SumAllTails(matrix ...[]int) []int {
-	var initSums []int
-	return reduce(matrix, initSums, func(numbers, tailSums []int) []int {
+	accumulator := func(tailSums, numbers []int) []int {
 		if len(numbers) == 0 {
 			tailSums = append(tailSums, 0)
 		} else {
@@ -24,13 +23,14 @@ func SumAllTails(matrix ...[]int) []int {
 			tailSums = append(tailSums, Sum(tail))
 		}
 		return tailSums
-	})
+	}
+	return Reduce(matrix, []int{}, accumulator)
 }
 
-func reduce[I any](input []I, initVal I, accumulator func(I, I) I) I {
+func Reduce[I any](input []I, initVal I, accumulator func(I, I) I) I {
 	result := initVal
 	for _, val := range input {
-		result = accumulator(val, result)
+		result = accumulator(result, val)
 	}
 	return result
 }
