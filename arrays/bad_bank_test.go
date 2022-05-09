@@ -3,20 +3,20 @@ package arrays
 import "testing"
 
 func TestBadBank(t *testing.T) {
+	riya := Account{Name: "Riya", Balance: 100}
+	chris := Account{Name: "Chris", Balance: 75}
+	adil := Account{Name: "Adil", Balance: 200}
+
 	transactions := []Transaction{
-		{
-			From: "Chris",
-			To:   "Riya",
-			Sum:  100,
-		},
-		{
-			From: "Adil",
-			To:   "Chris",
-			Sum:  25,
-		},
+		NewTransaction(chris, riya, 100),
+		NewTransaction(adil, chris, 25),
 	}
 
-	assertEqual(t, BalanceFor(transactions, "Riya"), 100.0)
-	assertEqual(t, BalanceFor(transactions, "Chris"), -75.0)
-	assertEqual(t, BalanceFor(transactions, "Adil"), -25.0)
+	newBalanceFor := func(account Account) float64 {
+		return NewBalanceFor(account, transactions).Balance
+	}
+
+	assertEqual(t, newBalanceFor(riya), 200.0)
+	assertEqual(t, newBalanceFor(chris), 0.0)
+	assertEqual(t, newBalanceFor(adil), 175.0)
 }
